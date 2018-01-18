@@ -1,5 +1,10 @@
 // server.js
 // load the things we need
+
+const PORT = process.env.PORT || 5000
+
+
+
 var fs = require('fs'),
     https = require('https'),
     bcrypt = require('bcrypt');
@@ -300,5 +305,5 @@ app.get('/cart', function (req, res) {
 // });
 
 
-app.listen(8080);
+app.listen(PORT);
 console.log('8080 is the magic port');
