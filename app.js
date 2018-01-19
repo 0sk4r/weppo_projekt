@@ -1,7 +1,7 @@
 // server.js
 // load the things we need
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 8080;
 
 
 
@@ -91,6 +91,20 @@ var product = db.define('product', {
     image: Sequelize.STRING
 });
 
+var order = db.define('order', {
+    price: Sequelize.FLOAT
+});
+
+var orderItem = db.define('orderItem', {
+    qty: Sequelize.INTEGER
+});
+
+orderItem.belongsTo(order);
+orderItem.belongsTo(product);
+order.items = order.hasMany(orderItem);
+user.orders = user.hasMany(order);
+
+// db.sync();
 // var db = new sqlite3.Database('db/database.db', sqlite3.OPEN_READ, (err) => {
 //     if (err) {
 //         console.error(err.message);
@@ -201,6 +215,8 @@ app.post('/login', function (req, res) {
             if (x) {
                 console.log('hasło poprawne');
                 req.session.user = login;
+                console.log(result);
+                req.session.userid = result.dataValues.id;
                 req.session.valid = true;
                 req.session.cart = {};
                 res.redirect('/');
@@ -286,24 +302,50 @@ app.post('/edit/:id', upload, function (req, res) {
 
 app.get('/buy/:id', function (req, res) {
     let id = req.param('id');
-    if (req.session.cart[id] === undefined) {
-        req.session.cart[id] = 1;
-    }
-    else {
-        req.session.cart[id] += 1;
-    }
-    console.log(req.session.cart);
-    res.redirect('/');
+    product.findById(id).then(function (product) {
+        if (req.session.cart[id] === undefined) {
+            req.session.cart[id] = {
+                qty: 1,
+                name: product.dataValues.name,
+                price: product.dataValues.price
+            };
+        }
+        else {
+            req.session.cart[id].qty += 1;
+        }
+        console.log(req.session.cart);
+        res.redirect('/');
+    })
+
 });
 
 
 app.get('/cart', function (req, res) {
-    res.render('cart');
+    res.render('cart',{product: req.session.cart});
 });
 // app.get('/content', auth, function (req, res) {
 //     res.send("You can only see this after you've logged in.");
 // });
 
+app.get('/checkout', function (req, res) {
+    let cart = req.session.cart;
+    let id = req.session.userid;
+
+    order.create({
+        price: 1,
+        userId: id,
+    }).then(function (resoult) {
+        console.log(resoult);
+        for(var key in cart){
+            orderItem.create({
+                qty: cart[key].qty,
+                orderId: resoult.dataValues.id,
+                productId: key
+            })
+        }
+        res.redirect('/');
+    })
+});
 
 app.listen(PORT);
 console.log('8080 is the magic port');
