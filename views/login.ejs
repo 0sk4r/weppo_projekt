@@ -40,6 +40,11 @@
     </div>
 </nav>
 
+    <% if(error) { %>
+        <div class="alert alert-danger">
+            <strong>Niepoprawne hasło lub login!</strong>
+    </div>
+    <% } %>
 
     <form method="POST" id="loginform">
         <div class="form-group">

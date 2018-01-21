@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
+          crossorigin="anonymous">
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Twoje zamówienia</title>
+</head>
+<body>
+
+
+<h1>Twoje zamówienia:</h1>
+<table class="table table-striped">
+
+    <tr>
+        <th>ID</th>
+        <th>Cena</th>
+        <th></th>
+    </tr>
+    <% for(var i = 0; i < orders.length; i++) { %>
+    <tr>
+        <td>
+            <%= orders[i].dataValues.id %>
+        </td>
+        <td>
+            <%= orders[i].dataValues.price %>
+        </td>
+        <td>
+            <input type="button" value="Szczegóły" onclick=<%=`window.location.href='/order/${orders[i].dataValues.id}'`%> />
+        </td>
+    </tr>
+    <% } %>
+</table>
+
+</body>
+</html>

@@ -103,8 +103,9 @@ orderItem.belongsTo(order);
 orderItem.belongsTo(product);
 order.items = order.hasMany(orderItem);
 user.orders = user.hasMany(order);
+order.belongsTo(user);
 
-// db.sync();
+//db.sync();
 // var db = new sqlite3.Database('db/database.db', sqlite3.OPEN_READ, (err) => {
 //     if (err) {
 //         console.error(err.message);
@@ -139,7 +140,7 @@ app.post('/', function (req, res) {
 });
 
 app.get('/login', function (req, res) {
-    res.render('login');
+    res.render('login',{error: false});
 
 });
 
@@ -159,7 +160,7 @@ function authenticate(req, res, next) {
     }
     else {
         console.log('jebło');
-        res.send('jebło');
+        res.send('Funkcja dostępna tylko dla zalogowanych');
     }
 }
 
@@ -173,7 +174,8 @@ app.post('/register', function (req, res) {
     let admin = req.body.admin;
     let password = req.body.password.toString();
 
-    // db.run(`INSERT INTO user (login,password) VALUES ('${login}','${password}')`);
+    // db.run(`INSERT
+    // INTO user (login,password) VALUES ('${login}','${password}')`);
     user.count({
         where: {
             login: login
@@ -210,21 +212,26 @@ app.post('/login', function (req, res) {
     // let admin = req.body.admin;
 
     user.findOne({where: {login: login}}).then(function (result) {
-        let hashedPassword = result.dataValues.password;
-        bcrypt.compare(password, hashedPassword, function (err, x) {
-            if (x) {
-                console.log('hasło poprawne');
-                req.session.user = login;
-                console.log(result);
-                req.session.userid = result.dataValues.id;
-                req.session.valid = true;
-                req.session.cart = {};
-                res.redirect('/');
-            }
-            else {
-                console.log('hasło błędne!!!');
-            }
-        });
+        if(result != null) {
+            let hashedPassword = result.dataValues.password;
+            bcrypt.compare(password, hashedPassword, function (err, x) {
+                if (x) {
+                    console.log('hasło poprawne');
+                    req.session.user = login;
+                    req.session.userid = result.dataValues.id;
+                    req.session.valid = true;
+                    req.session.cart = {};
+                    res.redirect('/');
+                }
+                else {
+                    console.log('hasło błędne!!!');
+                    res.render('login', {error: true})
+                }
+            });
+        }
+        else {
+            res.render('login', {error: true})
+        }
         //console.log(result);
     })
 
@@ -300,7 +307,7 @@ app.post('/edit/:id', upload, function (req, res) {
 
 });
 
-app.get('/buy/:id', function (req, res) {
+app.get('/buy/:id', authenticate, function (req, res) {
     let id = req.param('id');
     product.findById(id).then(function (product) {
         if (req.session.cart[id] === undefined) {
@@ -309,9 +316,11 @@ app.get('/buy/:id', function (req, res) {
                 name: product.dataValues.name,
                 price: product.dataValues.price
             };
+            req.session.price = product.dataValues.price
         }
         else {
             req.session.cart[id].qty += 1;
+            req.session.price += product.dataValues.price
         }
         console.log(req.session.cart);
         res.redirect('/');
@@ -330,9 +339,10 @@ app.get('/cart', function (req, res) {
 app.get('/checkout', function (req, res) {
     let cart = req.session.cart;
     let id = req.session.userid;
+    let price = req.session.price;
 
     order.create({
-        price: 1,
+        price: price,
         userId: id,
     }).then(function (resoult) {
         console.log(resoult);
@@ -343,9 +353,31 @@ app.get('/checkout', function (req, res) {
                 productId: key
             })
         }
+
         res.redirect('/');
     })
 });
 
+app.get('/orders', function (req, res) {
+    var userid = req.session.userid;
+
+    order.findAll({where: {userId: userid}}).then(function (resoult) {
+        res.render('orders', {orders: resoult});
+    })
+});
+
+app.get('/order/:id', function (req, res) {
+    const id = req.param('id');
+
+    orderItem.findAll({where: {orderId: id}, include: {model: product}}).then(function (resoult) {
+        res.render('order', {orders_item: resoult, id: id});
+    })
+});
+
+app.get('/all', function (req, res) {
+    order.findAll({include: {model: user}}).then(function (resoult) {
+    res.render('all', {orders: resoult})
+    })
+});
 app.listen(PORT);
 console.log('8080 is the magic port');
