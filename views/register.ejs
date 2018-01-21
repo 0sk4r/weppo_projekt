@@ -33,13 +33,17 @@
     </div>
 </nav>
 
+<% if(error) { %>
+<div class="alert alert-danger">
+    <strong>Login jest już zajęty</strong>
+</div>
+<% } %>
 
-
-    <form method="POST">
-        Login: <input type="text" name="login">
-        Hasło: <input type="password" name="password">
-        Admin: <input type="checkbox" name="admin">
-        <button>Rejestracja</button>
-    </form>
+<form method="POST">
+    Login: <input type="text" name="login">
+    Hasło: <input type="password" name="password">
+    Admin: <input type="checkbox" name="admin">
+    <button>Rejestracja</button>
+</form>
 </body>
 </html>

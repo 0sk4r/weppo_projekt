@@ -1,8 +1,9 @@
 // server.js
 // load the things we need
+//admin user: login: admin password: admin
+//normal user: login: testowy password: testowy
 
 const PORT = process.env.PORT || 8080;
-
 
 
 var fs = require('fs'),
@@ -19,16 +20,7 @@ var Sequelize = require('sequelize');
 const sqlite3 = require('sqlite3').verbose();
 const Op = Sequelize.Op;
 
-// https.createServer({
-//     key: fs.readFileSync('key.pem'),
-//     cert: [fs.readFileSync('cert.pem'),'1234']
-// }, app).listen(8080);
-var generateHash = function (password, done) {
-    bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, null, done);
-    })
-};
-
+//multer config
 var storage = multer.diskStorage({
     destination: function (req, file, callback) {
         callback(null, "./images");
@@ -41,12 +33,13 @@ var storage = multer.diskStorage({
 var upload = multer({
     storage: storage
 }).single('photo');
+
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
-app.use(express.urlencoded({
-    extended: true
-}));
+app.use(express.urlencoded({extended: true}));
+
+//session config
 app.use(session({
     key: 'user_sid',
     secret: 'aldkjsalkdjlkasjlkjaldjsjdaljlska',
@@ -56,17 +49,13 @@ app.use(session({
         expires: 600000
     }
 }));
+
 app.use(cookieParser('aldkjsalkdjlkasjlkjaldjsjdaljlska'));
+
 app.use(express.static(__dirname + '/images'));
-// app.use((req, res, next) => {
-//     if (req.cookie.user_id && !req.session.user){
-//         res.clearCookie('user_id');
-//     }
-// });
 
-// use res.render to load up an ejs view file
 
-//ORM DATABASE
+//Sequelze config and models
 var db = new Sequelize(null, null, null, {
     dialect: "sqlite",
     storage: 'db/database.db',
@@ -75,13 +64,7 @@ var db = new Sequelize(null, null, null, {
 var user = db.define('user', {
     login: Sequelize.STRING,
     password: Sequelize.STRING,
-    admin: Sequelize.STRING
-}, {
-    instanceMethods: {
-        validPassword: function (password) {
-            return bcrypt.compareSync(password, this.password);
-        }
-    }
+    admin: Sequelize.BOOLEAN
 });
 
 var product = db.define('product', {
@@ -105,77 +88,89 @@ order.items = order.hasMany(orderItem);
 user.orders = user.hasMany(order);
 order.belongsTo(user);
 
-//db.sync();
-// var db = new sqlite3.Database('db/database.db', sqlite3.OPEN_READ, (err) => {
-//     if (err) {
-//         console.error(err.message);
-//     }
-//     console.log('Connected to the database.');
-// });
 
-// db.run(`CREATE TABLE IF NOT EXISTS user (id INT, login TEXT, password TEXT)`);
 
-// index page
-// app.get('/images/:id',function (req,res){
-//         res.sendFile('images/'+id)
-//     }
-//     )
-app.get('/', function (req, res) {
+function authenticate(req, res, next) {
     if (req.session.valid) {
-        console.log(req.session.user);
+        next();
     }
+    else {
+        res.send('Funkcja dostępna tylko dla zalogowanych');
+    }
+}
 
+function authenticateAdmin(req, res, next) {
+    if (req.session.admin === "1" && req.session.valid) {
+        next();
+    }
+    else {
+        res.end('Funkcja dostępna tylko dla administratora');
+    }
+}
+// db.sync();
+
+
+//router
+
+app.get('/', function (req, res) {
     product.findAll().then(function (table) {
-        res.render('index', {product: table});
+        res.render('index', {product: table, admin: req.session.admin});
     })
 });
 
 app.post('/', function (req, res) {
     let item = req.body.search_text;
-    product.findAll({where: {
-        name: {[Op.like]: '%' + item + '%'}
-        }}).then(function (product) {
-            res.render('index', {product: product})
+    product.findAll({
+        where: {
+            name: {[Op.like]: '%' + item + '%'}
+        }
+    }).then(function (product) {
+        res.render('index', {product: product})
     })
 });
 
 app.get('/login', function (req, res) {
-    res.render('login',{error: false});
+    res.render('login', {error: false});
+
+});
+
+app.post('/login', function (req, res) {
+    let login = req.body.login.toString();
+    let password = req.body.password.toString();
+
+    user.findOne({where: {login: login}}).then(function (result) {
+        if (result != null) {
+            let hashedPassword = result.dataValues.password;
+            bcrypt.compare(password, hashedPassword, function (err, x) {
+                if (x) {
+                    req.session.user = login;
+                    req.session.userid = result.dataValues.id;
+                    req.session.admin = result.dataValues.admin;
+                    req.session.valid = true;
+                    req.session.cart = {};
+                    res.redirect('/');
+                }
+                else {
+                    res.render('login', {error: true})
+                }
+            });
+        }
+        else {
+            res.render('login', {error: true})
+        }
+    })
 
 });
 
 app.get('/register', function (req, res) {
-    res.render('register');
+    res.render('register', {error: false});
 });
 
-app.get('/logout', function (req, res) {
-    req.session.destroy();
-    res.redirect('/');
-});
-
-function authenticate(req, res, next) {
-    if (req.session.valid) {
-        console.log('dziala');
-        next();
-    }
-    else {
-        console.log('jebło');
-        res.send('Funkcja dostępna tylko dla zalogowanych');
-    }
-}
-
-app.get('/secret', authenticate, function (req, res) {
-    res.render('secret');
-});
-
-//TODO ORM
 app.post('/register', function (req, res) {
     let login = req.body.login.toString();
-    let admin = req.body.admin;
+    let admin = req.body.admin === 'on';
     let password = req.body.password.toString();
 
-    // db.run(`INSERT
-    // INTO user (login,password) VALUES ('${login}','${password}')`);
     user.count({
         where: {
             login: login
@@ -183,14 +178,10 @@ app.post('/register', function (req, res) {
     })
         .then((result) => {
             if (result >= 1) {
-                res.end('istnieje juz');
+                res.render('register', {error: true})
             } else {
-
                 bcrypt.genSalt(10, function (err, salt) {
                     bcrypt.hash(password, salt, function (err, hashedPassword) {
-
-                        // console.log(hashedPassword);
-
                         user.create({
                             login: login,
                             password: hashedPassword,
@@ -205,48 +196,20 @@ app.post('/register', function (req, res) {
         });
 });
 
-//TODO ORM
-app.post('/login', function (req, res) {
-    let login = req.body.login.toString();
-    let password = req.body.password.toString();
-    // let admin = req.body.admin;
-
-    user.findOne({where: {login: login}}).then(function (result) {
-        if(result != null) {
-            let hashedPassword = result.dataValues.password;
-            bcrypt.compare(password, hashedPassword, function (err, x) {
-                if (x) {
-                    console.log('hasło poprawne');
-                    req.session.user = login;
-                    req.session.userid = result.dataValues.id;
-                    req.session.valid = true;
-                    req.session.cart = {};
-                    res.redirect('/');
-                }
-                else {
-                    console.log('hasło błędne!!!');
-                    res.render('login', {error: true})
-                }
-            });
-        }
-        else {
-            res.render('login', {error: true})
-        }
-        //console.log(result);
-    })
-
+app.get('/logout', function (req, res) {
+    req.session.destroy();
+    res.redirect('/');
 });
 
-app.get('/add', function (req, res) {
+
+app.get('/add', authenticateAdmin, function (req, res) {
     product.findAll().then(function (table) {
         res.render('add', {product: table});
     })
 
 });
 
-
-//TODO ORM
-app.post('/add', upload, function (req, res) {
+app.post('/add', authenticateAdmin, upload, function (req, res) {
     let filename = req.file.filename;
     let name = req.body.name;
     let description = req.body.description;
@@ -262,7 +225,8 @@ app.post('/add', upload, function (req, res) {
     res.redirect("/add");
 });
 
-app.get('/delete/:id', function (req, res) {
+
+app.get('/delete/:id', authenticateAdmin, function (req, res) {
 
     let id = req.param('id');
     // console.log(name);
@@ -275,7 +239,7 @@ app.get('/delete/:id', function (req, res) {
 });
 
 
-app.get('/edit/:id', function (req, res) {
+app.get('/edit/:id', authenticateAdmin, function (req, res) {
     let id = req.param('id');
     //console.log(id);
     product.findById(id).then((product) => {
@@ -285,16 +249,14 @@ app.get('/edit/:id', function (req, res) {
 });
 
 
-app.post('/edit/:id', upload, function (req, res) {
-    if (req.file != undefined) {
+app.post('/edit/:id', authenticateAdmin, upload, function (req, res) {
+    if (req.file !== undefined) {
         var filename = req.file.filename;
     }
-    //console.log(filename);
     let name = req.body.name;
     let description = req.body.description;
     let price = req.body.price;
     let id = req.param('id');
-    //console.log(name);
 
     product.update({
         name: name,
@@ -322,21 +284,17 @@ app.get('/buy/:id', authenticate, function (req, res) {
             req.session.cart[id].qty += 1;
             req.session.price += product.dataValues.price
         }
-        console.log(req.session.cart);
         res.redirect('/');
     })
 
 });
 
 
-app.get('/cart', function (req, res) {
-    res.render('cart',{product: req.session.cart});
+app.get('/cart', authenticate, function (req, res) {
+    res.render('cart', {product: req.session.cart});
 });
-// app.get('/content', auth, function (req, res) {
-//     res.send("You can only see this after you've logged in.");
-// });
 
-app.get('/checkout', function (req, res) {
+app.get('/checkout', authenticate, function (req, res) {
     let cart = req.session.cart;
     let id = req.session.userid;
     let price = req.session.price;
@@ -345,8 +303,7 @@ app.get('/checkout', function (req, res) {
         price: price,
         userId: id,
     }).then(function (resoult) {
-        console.log(resoult);
-        for(var key in cart){
+        for (var key in cart) {
             orderItem.create({
                 qty: cart[key].qty,
                 orderId: resoult.dataValues.id,
@@ -358,7 +315,7 @@ app.get('/checkout', function (req, res) {
     })
 });
 
-app.get('/orders', function (req, res) {
+app.get('/orders', authenticate, function (req, res) {
     var userid = req.session.userid;
 
     order.findAll({where: {userId: userid}}).then(function (resoult) {
@@ -366,7 +323,7 @@ app.get('/orders', function (req, res) {
     })
 });
 
-app.get('/order/:id', function (req, res) {
+app.get('/order/:id', authenticate, function (req, res) {
     const id = req.param('id');
 
     orderItem.findAll({where: {orderId: id}, include: {model: product}}).then(function (resoult) {
@@ -374,10 +331,11 @@ app.get('/order/:id', function (req, res) {
     })
 });
 
-app.get('/all', function (req, res) {
+app.get('/all', authenticateAdmin, function (req, res) {
     order.findAll({include: {model: user}}).then(function (resoult) {
-    res.render('all', {orders: resoult})
+        res.render('all', {orders: resoult})
     })
 });
+
 app.listen(PORT);
-console.log('8080 is the magic port');
+console.log(PORT);

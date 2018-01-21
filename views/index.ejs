@@ -87,9 +87,6 @@
     <div class="container-fluid">
         <a class="navbar-brand" href="/">Sklep u Bobczyka</a>
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item ">
-                <a class="nav-link" href="/cart">Cart</a>
-            </li>
             <li class="nav-item">
                 <a class="nav-link" href="/login">Logowanie</a>
             </li>
@@ -97,13 +94,16 @@
                 <a class="nav-link" href="/register">Rejestracja</a>
             </li>
             <li class="nav-item ">
-                <a class="nav-link" href="/add">Dodaj</a>
+                <a class="nav-link" href="/cart">Koszyk</a>
             </li>
             <li class="nav-item ">
-                <a class="nav-link" href="/secret">Secret</a>
+                <a class="nav-link" href="/orders">Moje zamówienia</a>
             </li>
-
-
+            <% if(admin === "1") { %>
+            <li class="nav-item ">
+                <a class="nav-link" href="/add">Zarządzanie sklepem</a>
+            </li>
+            <% } %>
             <li class="nav-item">
                 <form method="post">
                     <input type="text" name="search_text">
