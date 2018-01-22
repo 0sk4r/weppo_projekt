@@ -114,7 +114,7 @@ function authenticateAdmin(req, res, next) {
 
 app.get('/', function (req, res) {
     product.findAll().then(function (table) {
-        res.render('index', {product: table, admin: req.session.admin});
+        res.render('index', {product: table, admin: req.session.admin, login: req.session.valid});
     })
 });
 
@@ -125,7 +125,7 @@ app.post('/', function (req, res) {
             name: {[Op.like]: '%' + item + '%'}
         }
     }).then(function (product) {
-        res.render('index', {product: product})
+        res.render('index', {product: product, admin: req.session.admin, login: req.session.valid})
     })
 });
 

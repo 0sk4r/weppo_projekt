@@ -3,11 +3,11 @@
 <style>
     img {
         max-height: 400px;
-        max-width: 300px;}
+        max-width: 300px;
+    }
 
-    .glyphicon { margin-right:5px; }
-    .thumbnail
-    {
+
+    .thumbnail {
         margin-bottom: 20px;
         padding: 0px;
         -webkit-border-radius: 0px;
@@ -16,59 +16,31 @@
         border-image-width: 5px;
     }
 
-    .item.list-group-item
-    {
-        float: none;
-        width: 100%;
-        background-color: #fff;
-        margin-bottom: 10px;
-    }
-    .item.list-group-item:nth-of-type(odd):hover,.item.list-group-item:hover
-    {
-        background: #428bca;
-    }
 
-    .item.list-group-item .list-group-image
-    {
-        margin-right: 10px;
-    }
-    .item.list-group-item .thumbnail
-    {
+
+    .item.list-group-item .thumbnail {
         margin-bottom: 0px;
     }
-    .item.list-group-item .caption
-    {
-        padding: 9px 9px 0px 9px;
-    }
-    .item.list-group-item:nth-of-type(odd)
-    {
-        background: #eeeeee;
-    }
 
-    .item.list-group-item:before, .item.list-group-item:after
-    {
-        display: table;
-        content: " ";
-    }
 
-    .item.list-group-item img
-    {
+    .item.list-group-item img {
         float: left;
     }
-    .item.list-group-item:after
-    {
-        clear: both;
-    }
-    .list-group-item-text
-    {
+
+
+    .list-group-item-text {
         margin: 0 0 11px;
     }
 
     #item {
-        border-color: black;
-        border-width: 5px;
+        border-color: gray;
+        border-width: 1px;
         border-style: solid;
         margin: 20px;
+    }
+
+    .productImg {
+        height: 350px;
     }
 
 </style>
@@ -87,14 +59,19 @@
     <div class="container-fluid">
         <a class="navbar-brand" href="/">Sklep u Bobczyka</a>
         <ul class="navbar-nav mr-auto">
+            <%if(!login){%>
             <li class="nav-item">
                 <a class="nav-link" href="/login">Logowanie</a>
             </li>
             <li class="nav-item ">
                 <a class="nav-link" href="/register">Rejestracja</a>
             </li>
-            <li class="nav-item ">
-                <a class="nav-link" href="/cart">Koszyk</a>
+            <%} else { %>
+            <li class="nav-item">
+                <a class="nav-link" href="/logout">Wyloguj  </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/cart">Koszyk  </a>
             </li>
             <li class="nav-item ">
                 <a class="nav-link" href="/orders">Moje zamówienia</a>
@@ -103,7 +80,7 @@
             <li class="nav-item ">
                 <a class="nav-link" href="/add">Zarządzanie sklepem</a>
             </li>
-            <% } %>
+            <% } }%>
             <li class="nav-item">
                 <form method="post">
                     <input type="text" name="search_text">
@@ -114,15 +91,16 @@
         </ul>
     </div>
 </nav>
+
 <div id="products" class="row grid-group-item">
-<% for(var i = 0; i < product.length; i++) { %>
+    <% for(var i = 0; i < product.length; i++) { %>
     <div class="item  col-xs-4 col-lg-4" id="item">
         <div class="thumbnail">
-
-            <img class="group grid-group-item" src= <%=product[i].dataValues.image %> alt=""/>
-
+            <div class="productImg">
+                <img class="group grid-group-item" src= <%= product[i].dataValues.image %> alt=""/>
+            </div>
             <div class="caption">
-                <h4 class="group inner list-group-item-heading"> <%=  product[i].dataValues.name %> </h4>
+                <h4 class="group inner list-group-item-heading"> <%= product[i].dataValues.name %> </h4>
                 <p class="group inner list-group-item-text">
                     <%= product[i].dataValues.description %>
                 </p>
@@ -133,7 +111,10 @@
                             <%= product[i].dataValues.price %> zł</p>
                     </div>
                     <div class="col-xs-12 col-md-6">
-                        <a class="btn btn-success" onclick=<%=`window.location.href='/buy/${product[i].dataValues.id}'`%> >Add to cart</a>
+                        <a class="btn btn-success"
+                           onclick=<%= `window.location.href='/buy/${product[i].dataValues.id}'` %>>
+                            Add to cart
+                        </a>
                     </div>
                 </div>
             </div>
@@ -142,7 +123,7 @@
 
     </div>
 
-<% } %>
+    <% } %>
 </div>
 </body>
 </html>
