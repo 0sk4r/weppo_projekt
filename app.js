@@ -1,14 +1,11 @@
-// server.js
-// load the things we need
+// app.js
 //admin user: login: admin password: admin
 //normal user: login: testowy password: testowy
 
 const PORT = process.env.PORT || 8080;
 
 
-var fs = require('fs'),
-    https = require('https'),
-    bcrypt = require('bcrypt');
+var bcrypt = require('bcrypt');
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
@@ -17,7 +14,6 @@ var session = require('express-session');
 var path = require('path');
 var multer = require('multer');
 var Sequelize = require('sequelize');
-const sqlite3 = require('sqlite3').verbose();
 const Op = Sequelize.Op;
 
 //multer config
@@ -53,7 +49,7 @@ app.use(session({
 app.use(cookieParser('aldkjsalkdjlkasjlkjaldjsjdaljlska'));
 
 app.use(express.static(__dirname + '/images'));
-
+app.use(express.static(__dirname + '/styles'));
 
 //Sequelze config and models
 var db = new Sequelize(null, null, null, {
@@ -130,7 +126,7 @@ app.post('/', function (req, res) {
 });
 
 app.get('/login', function (req, res) {
-    res.render('login', {error: false});
+    res.render('login', {error: false, admin: req.session.admin, login: req.session.valid});
 
 });
 
@@ -148,10 +144,11 @@ app.post('/login', function (req, res) {
                     req.session.admin = result.dataValues.admin;
                     req.session.valid = true;
                     req.session.cart = {};
+                    req.session.price = 0;
                     res.redirect('/');
                 }
                 else {
-                    res.render('login', {error: true})
+                    res.render('login', {error: true, admin: req.session.admin, login: req.session.valid})
                 }
             });
         }
@@ -163,7 +160,7 @@ app.post('/login', function (req, res) {
 });
 
 app.get('/register', function (req, res) {
-    res.render('register', {error: false});
+    res.render('register', {error: false, admin: req.session.admin, login: req.session.valid});
 });
 
 app.post('/register', function (req, res) {
@@ -204,7 +201,7 @@ app.get('/logout', function (req, res) {
 
 app.get('/add', authenticateAdmin, function (req, res) {
     product.findAll().then(function (table) {
-        res.render('add', {product: table});
+        res.render('add', {product: table, admin: req.session.admin, login: req.session.valid});
     })
 
 });
@@ -244,7 +241,7 @@ app.get('/edit/:id', authenticateAdmin, function (req, res) {
     //console.log(id);
     product.findById(id).then((product) => {
         // console.log(product);
-        res.render('edit', {product: product});
+        res.render('edit', {product: product, admin: req.session.admin, login: req.session.valid});
     });
 });
 
@@ -278,7 +275,7 @@ app.get('/buy/:id', authenticate, function (req, res) {
                 name: product.dataValues.name,
                 price: product.dataValues.price
             };
-            req.session.price = product.dataValues.price
+            req.session.price += product.dataValues.price
         }
         else {
             req.session.cart[id].qty += 1;
@@ -291,35 +288,45 @@ app.get('/buy/:id', authenticate, function (req, res) {
 
 
 app.get('/cart', authenticate, function (req, res) {
-    res.render('cart', {product: req.session.cart});
+    res.render('cart', {product: req.session.cart, admin: req.session.admin, login: req.session.valid});
 });
 
 app.get('/checkout', authenticate, function (req, res) {
     let cart = req.session.cart;
     let id = req.session.userid;
     let price = req.session.price;
-
-    order.create({
-        price: price,
-        userId: id,
-    }).then(function (resoult) {
-        for (var key in cart) {
-            orderItem.create({
-                qty: cart[key].qty,
-                orderId: resoult.dataValues.id,
-                productId: key
-            })
-        }
-
-        res.redirect('/');
-    })
+    if(cart != {}) {
+        order.create({
+            price: price,
+            userId: id,
+        }).then(function (resoult) {
+            for (var key in cart) {
+                orderItem.create({
+                    qty: cart[key].qty,
+                    orderId: resoult.dataValues.id,
+                    productId: key
+                })
+            }
+            req.session.cart = {};
+            req.session.price = 0;
+            res.redirect('/');
+        })
+    } else {res.redirect('/');}
 });
 
 app.get('/orders', authenticate, function (req, res) {
     var userid = req.session.userid;
 
     order.findAll({where: {userId: userid}}).then(function (resoult) {
-        res.render('orders', {orders: resoult});
+        res.render('orders', {orders: resoult, admin: req.session.admin, login: req.session.valid});
+    })
+});
+
+app.get('/orders/:id', authenticate, function (req, res) {
+    var userid = req.param('id') || req.session.userid;
+
+    order.findAll({where: {userId: userid}}).then(function (resoult) {
+        res.render('orders', {orders: resoult, admin: req.session.admin, login: req.session.valid});
     })
 });
 
@@ -327,15 +334,21 @@ app.get('/order/:id', authenticate, function (req, res) {
     const id = req.param('id');
 
     orderItem.findAll({where: {orderId: id}, include: {model: product}}).then(function (resoult) {
-        res.render('order', {orders_item: resoult, id: id});
+        res.render('order', {orders_item: resoult, id: id, admin: req.session.admin, login: req.session.valid});
     })
 });
 
 app.get('/all', authenticateAdmin, function (req, res) {
     order.findAll({include: {model: user}}).then(function (resoult) {
-        res.render('all', {orders: resoult})
+        res.render('all', {orders: resoult, admin: req.session.admin, login: req.session.valid})
     })
 });
+
+app.get('/users', authenticateAdmin, function (req, res) {
+    user.findAll().then(function (resoult) {
+        res.render('users', {users: resoult, admin: req.session.admin, login: req.session.valid})
+    })
+})
 
 app.listen(PORT);
 console.log(PORT);

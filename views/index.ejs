@@ -1,49 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<style>
-    img {
-        max-height: 400px;
-        max-width: 300px;
-    }
 
-
-    .thumbnail {
-        margin-bottom: 20px;
-        padding: 0px;
-        -webkit-border-radius: 0px;
-        -moz-border-radius: 0px;
-        border-color: black;
-        border-image-width: 5px;
-    }
-
-
-
-    .item.list-group-item .thumbnail {
-        margin-bottom: 0px;
-    }
-
-
-    .item.list-group-item img {
-        float: left;
-    }
-
-
-    .list-group-item-text {
-        margin: 0 0 11px;
-    }
-
-    #item {
-        border-color: gray;
-        border-width: 1px;
-        border-style: solid;
-        margin: 20px;
-    }
-
-    .productImg {
-        height: 350px;
-    }
-
-</style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,12 +9,13 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css"
           integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
 
+    <link rel="stylesheet" type="text/css" href="style.css">
     <title>Sklep</title>
 </head>
 <body>
 <nav class="navbar navbar-expand-sm bg-light bg-dark navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Sklep u Bobczyka</a>
+        <a class="navbar-brand" href="/">Komputrex</a>
         <ul class="navbar-nav mr-auto">
             <%if(!login){%>
             <li class="nav-item">
@@ -74,11 +32,17 @@
                 <a class="nav-link" href="/cart">Koszyk  </a>
             </li>
             <li class="nav-item ">
-                <a class="nav-link" href="/orders">Moje zamówienia</a>
+                <a class="nav-link" href="/orders/">Moje zamówienia</a>
             </li>
             <% if(admin === "1") { %>
             <li class="nav-item ">
                 <a class="nav-link" href="/add">Zarządzanie sklepem</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/users">Zarządzanie użytkownikami</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/all">Wszystkie zamówienia</a>
             </li>
             <% } }%>
             <li class="nav-item">
@@ -94,7 +58,7 @@
 
 <div id="products" class="row grid-group-item">
     <% for(var i = 0; i < product.length; i++) { %>
-    <div class="item  col-xs-4 col-lg-4" id="item">
+    <div class="item  col-sm-3" id="item">
         <div class="thumbnail">
             <div class="productImg">
                 <img class="group grid-group-item" src= <%= product[i].dataValues.image %> alt=""/>

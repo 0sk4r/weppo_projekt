@@ -5,45 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
-        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css"
+          integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
+          crossorigin="anonymous">
 
     <title>Edytuj przedmiot</title>
 </head>
 <body>
-     <!-- Navbar-->
-     <nav class="navbar navbar-expand-sm bg-light bg-dark navbar-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">Sklep u Bobczyka</a>
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/login">Logowanie</a>
-                    </li>
-                    <li class="nav-item ">
-                        <a class="nav-link" href="/register">Rejestracja</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/add">Dodaj</a>
-                    </li>
-                    <li class="nav-item ">
-                        <a class="nav-link" href="/secret">Secret</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+<!-- Navbar-->
+<nav class="navbar navbar-expand-sm bg-light bg-dark navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Komputrex</a>
+        <ul class="navbar-nav mr-auto">
+            <%if(!login){%>
+            <li class="nav-item">
+                <a class="nav-link" href="/login">Logowanie</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/register">Rejestracja</a>
+            </li>
+            <%} else { %>
+            <li class="nav-item">
+                <a class="nav-link" href="/logout">Wyloguj  </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/cart">Koszyk  </a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/orders">Moje zamówienia</a>
+            </li>
+            <% if(admin === "1") { %>
+            <li class="nav-item ">
+                <a class="nav-link" href="/add">Zarządzanie sklepem</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/users">Zarządzanie użytkownikami</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/all">Wszystkie zamówienia</a>
+            </li>
+            <% } }%>
+            <li class="nav-item">
+                <form method="post">
+                    <input type="text" name="search_text">
+                    <button type="submit" name="submint">Szukaj</button>
+                </form>
+            </li>
+
+        </ul>
+    </div>
+</nav>
+
+<div class="col-lg-12">
+    <!-- Formularz -->
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="name">Podaj nazwe:</label>
+            <input class="form-control" type="text" name="name" value="<%= product.dataValues.name %>">
+        </div>
+
+        <div class="form-group">
+            <!--<input type="text" name="description"> <br>-->
+            <label for="description">Podaj opis</label>
+            <textarea class="form-control" rows="2" name="description">     <%= product.dataValues.description %>
+            </textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Podaj cene:</label>
+            <input class="form-control" type="number" min="0.00" step="0.01" name="price"
+                   value="<%= product.dataValues.price %>"> <br>
+        </div>
+
+        <div class="form-group">
+            <label for="file">Wybierz zdjęcie:</label>
+            <input class="form-control-file" type="file" name="photo"> <br>
+
+        </div>
+        <button type="submit" class="btn btn-primary" name="submint">Dodaj</button>
+    </form>
 
 
-        <form method="POST" enctype="multipart/form-data">
-            Podaj nazwe:
-            <input type="text" name="name"  value = "<%= product.dataValues.name %>"> <br>
-            Podaj opis:
-            <input type="text" name="description" value = "<%= product.dataValues.description %>" > <br>
-            Podaj cene:
-            <input type="number" name="price" value= "<%= product.dataValues.price %>" > <br>
-            Dodaj zdjęcie:
-            <input type="file" name="photo" value= "<%= product.dataValues.image %> "> <br>
-            <button type="submit" name="submint">Aktualizuj</button>
-        </form>
+</div>
 
 </body>
 </html>

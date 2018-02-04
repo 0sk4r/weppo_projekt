@@ -14,23 +14,41 @@
 <body>
 <nav class="navbar navbar-expand-sm bg-light bg-dark navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Sklep u Bobczyka</a>
+        <a class="navbar-brand" href="/">Komputrex</a>
         <ul class="navbar-nav mr-auto">
+            <%if(!login){%>
             <li class="nav-item">
                 <a class="nav-link" href="/login">Logowanie</a>
             </li>
             <li class="nav-item ">
                 <a class="nav-link" href="/register">Rejestracja</a>
             </li>
-            <li class="nav-item ">
-                <a class="nav-link" href="/add">Dodaj</a>
+            <%} else { %>
+            <li class="nav-item">
+                <a class="nav-link" href="/logout">Wyloguj  </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/cart">Koszyk  </a>
             </li>
             <li class="nav-item ">
-                <a class="nav-link" href="/secret">Secret</a>
+                <a class="nav-link" href="/orders">Moje zamówienia</a>
             </li>
-
+            <% if(admin === "1") { %>
             <li class="nav-item ">
-                <a class="nav-link" href="/cart">Cart</a>
+                <a class="nav-link" href="/add">Zarządzanie sklepem</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/users">Zarządzanie użytkownikami</a>
+            </li>
+            <li class="nav-item ">
+                <a class="nav-link" href="/all">Wszystkie zamówienia</a>
+            </li>
+            <% } }%>
+            <li class="nav-item">
+                <form method="post">
+                    <input type="text" name="search_text">
+                    <button type="submit" name="submint">Szukaj</button>
+                </form>
             </li>
 
         </ul>
